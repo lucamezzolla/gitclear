@@ -343,7 +343,7 @@ public class MainView {
     private void applyStatusOutput(String output) {
         changesList.getItems().clear();
 
-        String[] lines = output.split("\R");
+        String[] lines = output.split("\\R");
         boolean branchFound = false;
 
         for (String line : lines) {
