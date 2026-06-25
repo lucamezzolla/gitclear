@@ -1,0 +1,74 @@
+.app-root {
+    -fx-background-color: #f7f7f8;
+    -fx-font-family: "SansSerif";
+    -fx-font-size: 14px;
+}
+
+.header {
+    -fx-padding: 22px 26px 14px 26px;
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #e5e5e7 transparent;
+}
+
+.app-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+}
+
+.app-subtitle {
+    -fx-text-fill: #6b7280;
+}
+
+.content {
+    -fx-padding: 18px 26px 18px 26px;
+}
+
+.card {
+    -fx-padding: 18px;
+    -fx-background-color: white;
+    -fx-background-radius: 14px;
+    -fx-border-color: #e7e7ea;
+    -fx-border-radius: 14px;
+}
+
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}
+
+.section-caption {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6b7280;
+    -fx-text-transform: uppercase;
+}
+
+.repo-path {
+    -fx-font-weight: 600;
+}
+
+.branch-label {
+    -fx-font-weight: 700;
+}
+
+.command-label {
+    -fx-font-family: "Monospaced";
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px;
+}
+
+.primary-button {
+    -fx-font-weight: 700;
+}
+
+.footer {
+    -fx-padding: 10px 26px 14px 26px;
+}
+
+.footer-label {
+    -fx-text-fill: #6b7280;
+}
+
+.text-area {
+    -fx-font-family: "Monospaced";
+}
