@@ -60,6 +60,10 @@ public class MainView {
     private final Button openButton = new Button(OPEN_REPOSITORY_LABEL);
     private final Button refreshButton = new Button("Refresh");
 
+    private final Button minimizeWindowButton = new Button("—");
+    private final Button maximizeWindowButton = new Button("□");
+    private final Button closeWindowButton = new Button("×");
+
     private Path currentRepository;
     private boolean gitAvailable;
 
@@ -98,18 +102,63 @@ public class MainView {
 
         refreshButton.setOnAction(event -> refreshStatus());
 
+        configureWindowControls();
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox actions = new HBox(10, cloneButton, openButton, refreshButton);
-        actions.setAlignment(Pos.CENTER_RIGHT);
+        HBox repositoryActions = new HBox(10, cloneButton, openButton, refreshButton);
+        repositoryActions.setAlignment(Pos.CENTER_RIGHT);
 
-        HBox topLine = new HBox(12, title, spacer, actions);
+        Region windowControlsSeparator = new Region();
+        windowControlsSeparator.getStyleClass().add("header-separator");
+        windowControlsSeparator.setMinWidth(1);
+        windowControlsSeparator.setPrefWidth(1);
+        windowControlsSeparator.setMaxWidth(1);
+        windowControlsSeparator.setPrefHeight(34);
+
+        HBox windowControls = new HBox(6, minimizeWindowButton, maximizeWindowButton, closeWindowButton);
+        windowControls.setAlignment(Pos.CENTER_RIGHT);
+
+        HBox topLine = new HBox(12, title, spacer, repositoryActions, windowControlsSeparator, windowControls);
         topLine.setAlignment(Pos.CENTER_LEFT);
 
         VBox header = new VBox(4, topLine, subtitle);
         header.getStyleClass().add("header");
         return header;
+    }
+
+    private void configureWindowControls() {
+        minimizeWindowButton.getStyleClass().add("window-control-button");
+        maximizeWindowButton.getStyleClass().add("window-control-button");
+        closeWindowButton.getStyleClass().addAll("window-control-button", "close-window-button");
+
+        minimizeWindowButton.setTooltip(new Tooltip("Minimize window"));
+        closeWindowButton.setTooltip(new Tooltip("Close GitClear"));
+
+        minimizeWindowButton.setOnAction(event -> stage.setIconified(true));
+        maximizeWindowButton.setOnAction(event -> toggleMaximizedWindow());
+        closeWindowButton.setOnAction(event -> stage.close());
+
+        stage.maximizedProperty().addListener((observable, oldValue, newValue) -> updateMaximizeWindowButton());
+        updateMaximizeWindowButton();
+    }
+
+    private void toggleMaximizedWindow() {
+        stage.setMaximized(!stage.isMaximized());
+        updateMaximizeWindowButton();
+    }
+
+    private void updateMaximizeWindowButton() {
+        boolean maximized = stage.isMaximized();
+
+        maximizeWindowButton.setText(maximized ? "❐" : "□");
+
+        if (maximizeWindowButton.getTooltip() == null) {
+            maximizeWindowButton.setTooltip(new Tooltip());
+        }
+
+        maximizeWindowButton.getTooltip().setText(maximized ? "Restore window" : "Maximize window");
     }
 
     private Parent buildContent() {

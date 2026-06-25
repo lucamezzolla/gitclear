@@ -84,6 +84,34 @@
     -fx-font-weight: 700;
 }
 
+.header-separator {
+    -fx-background-color: #e5e7eb;
+}
+
+.window-control-button {
+    -fx-min-width: 44px;
+    -fx-pref-width: 44px;
+    -fx-max-width: 44px;
+    -fx-min-height: 38px;
+    -fx-pref-height: 38px;
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 10px;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 10px;
+    -fx-padding: 0;
+}
+
+.window-control-button:hover {
+    -fx-background-color: #e5e7eb;
+}
+
+.close-window-button:hover {
+    -fx-background-color: #fee2e2;
+    -fx-border-color: #fecaca;
+}
+
 .footer {
     -fx-padding: 10px 26px 14px 26px;
 }
