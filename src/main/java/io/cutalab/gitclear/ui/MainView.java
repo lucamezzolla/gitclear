@@ -27,9 +27,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class MainView {
 
@@ -270,8 +273,9 @@ public class MainView {
     }
 
     private void cloneRepository(CloneRequest request) {
-        if (request.remoteUrl().isBlank() || request.destinationFolder().isBlank()) {
-            showWarning("Remote URL and destination folder are required.");
+        Optional<String> validationError = validateCloneRequest(request);
+        if (validationError.isPresent()) {
+            showWarning(validationError.get());
             return;
         }
 
@@ -286,6 +290,54 @@ public class MainView {
                 showError("Clone failed", result.output());
             }
         });
+    }
+
+    private Optional<String> validateCloneRequest(CloneRequest request) {
+        if (request.remoteUrl().isBlank()) {
+            return Optional.of("Remote URL is required.");
+        }
+
+        if (request.destinationFolder().isBlank()) {
+            return Optional.of("Destination folder is required.");
+        }
+
+        Path destinationPath;
+        try {
+            destinationPath = Path.of(request.destinationFolder()).toAbsolutePath().normalize();
+        } catch (InvalidPathException e) {
+            return Optional.of("Destination folder path is not valid.");
+        }
+
+        Path parent = destinationPath.getParent();
+        if (parent == null) {
+            return Optional.of("Destination folder must have a parent folder.");
+        }
+
+        if (!Files.exists(parent)) {
+            return Optional.of("Destination parent folder does not exist.");
+        }
+
+        if (!Files.isDirectory(parent)) {
+            return Optional.of("Destination parent path is not a folder.");
+        }
+
+        if (Files.exists(destinationPath) && !Files.isDirectory(destinationPath)) {
+            return Optional.of("Destination path already exists and is not a folder.");
+        }
+
+        if (Files.isDirectory(destinationPath) && !isDirectoryEmpty(destinationPath)) {
+            return Optional.of("Destination folder already exists and is not empty. Choose an empty folder or a new folder name.");
+        }
+
+        return Optional.empty();
+    }
+
+    private boolean isDirectoryEmpty(Path directory) {
+        try (Stream<Path> entries = Files.list(directory)) {
+            return entries.findAny().isEmpty();
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private void openLocalRepository() {

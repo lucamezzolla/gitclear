@@ -15,8 +15,8 @@ Status: in progress
 - [x] Show last Git command
 - [x] Recent repositories
 - [x] Detect missing Git installation clearly
+- [x] Better validation for destination folder
 - [ ] Improve clone progress feedback
-- [ ] Better validation for destination folder
 - [ ] Empty state improvements
 
 ## 0.2.x — Daily work basics
