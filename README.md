@@ -31,7 +31,8 @@ This first development version can:
 - show the detected Git version
 - clone a remote repository using the local `git` command
 - validate the clone destination before running Git
-- open an existing local repository
+- open or switch local repositories
+- switch repositories from the recent list
 - show the current branch/status line
 - show changed files
 - show the last Git command executed

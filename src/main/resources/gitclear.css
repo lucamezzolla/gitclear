@@ -42,6 +42,11 @@
     -fx-text-transform: uppercase;
 }
 
+.hint-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6b7280;
+}
+
 .repo-path {
     -fx-font-weight: 600;
 }

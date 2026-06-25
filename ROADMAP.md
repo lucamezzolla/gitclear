@@ -10,6 +10,7 @@ Status: in progress
 
 - [x] Open local repository
 - [x] Clone remote repository
+- [x] Switch repository
 - [x] Show current branch
 - [x] Show changed files
 - [x] Show last Git command

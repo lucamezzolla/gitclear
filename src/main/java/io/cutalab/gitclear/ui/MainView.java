@@ -36,6 +36,9 @@ import java.util.stream.Stream;
 
 public class MainView {
 
+    private static final String OPEN_REPOSITORY_LABEL = "Open Local Repository";
+    private static final String SWITCH_REPOSITORY_LABEL = "Switch Repository";
+
     private final Stage stage;
     private final GitService gitService;
     private final RecentRepositoriesService recentRepositoriesService;
@@ -51,7 +54,7 @@ public class MainView {
     private final TextArea commandOutput = new TextArea();
 
     private final Button cloneButton = new Button("Clone Repository");
-    private final Button openButton = new Button("Open Local Repository");
+    private final Button openButton = new Button(OPEN_REPOSITORY_LABEL);
     private final Button refreshButton = new Button("Refresh");
 
     private Path currentRepository;
@@ -144,6 +147,9 @@ public class MainView {
         Label recentCaption = new Label("Recent");
         recentCaption.getStyleClass().add("section-title");
 
+        Label recentHint = new Label("Double-click a repository to switch.");
+        recentHint.getStyleClass().add("hint-label");
+
         recentRepositoriesList.setPlaceholder(new Label("No recent repositories yet."));
         recentRepositoriesList.setCellFactory(list -> new ListCell<>() {
             @Override
@@ -161,7 +167,7 @@ public class MainView {
             }
         });
 
-        VBox recentCard = new VBox(12, recentCaption, recentRepositoriesList);
+        VBox recentCard = new VBox(8, recentCaption, recentHint, recentRepositoriesList);
         recentCard.getStyleClass().add("card");
         recentCard.setPrefWidth(320);
 
@@ -210,10 +216,15 @@ public class MainView {
         });
     }
 
+    private boolean hasRepositoryOpen() {
+        return currentRepository != null;
+    }
+
     private void updateActionState() {
+        openButton.setText(hasRepositoryOpen() ? SWITCH_REPOSITORY_LABEL : OPEN_REPOSITORY_LABEL);
         cloneButton.setDisable(!gitAvailable);
         openButton.setDisable(!gitAvailable);
-        refreshButton.setDisable(!gitAvailable || currentRepository == null);
+        refreshButton.setDisable(!gitAvailable || !hasRepositoryOpen());
         recentRepositoriesList.setDisable(!gitAvailable);
     }
 
@@ -342,11 +353,11 @@ public class MainView {
 
     private void openLocalRepository() {
         DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Open Git repository");
+        chooser.setTitle(hasRepositoryOpen() ? SWITCH_REPOSITORY_LABEL : OPEN_REPOSITORY_LABEL);
 
-        Path home = Path.of(System.getProperty("user.home"));
-        if (Files.isDirectory(home)) {
-            chooser.setInitialDirectory(home.toFile());
+        Path initial = hasRepositoryOpen() ? currentRepository.getParent() : Path.of(System.getProperty("user.home"));
+        if (initial != null && Files.isDirectory(initial)) {
+            chooser.setInitialDirectory(initial.toFile());
         }
 
         var selected = chooser.showDialog(stage);
@@ -366,17 +377,21 @@ public class MainView {
                 return;
             }
 
-            currentRepository = normalizedPath;
-            repositoryLabel.setText(currentRepository.toString());
+            setCurrentRepository(normalizedPath);
             recentRepositoriesService.addRepository(currentRepository);
             refreshRecentRepositories();
-            updateActionState();
             refreshStatus();
         });
     }
 
+    private void setCurrentRepository(Path repositoryPath) {
+        currentRepository = repositoryPath;
+        repositoryLabel.setText(currentRepository.toString());
+        updateActionState();
+    }
+
     private void refreshStatus() {
-        if (currentRepository == null) {
+        if (!hasRepositoryOpen()) {
             return;
         }
 
@@ -389,6 +404,7 @@ public class MainView {
             }
 
             applyStatusOutput(result.output());
+            updateActionState();
         });
     }
 

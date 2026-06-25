@@ -26,6 +26,7 @@ public class GitClearApplication extends Application {
         stage.setMinWidth(820);
         stage.setMinHeight(560);
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.show();
     }
 
