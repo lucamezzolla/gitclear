@@ -47,12 +47,30 @@
     -fx-text-fill: #6b7280;
 }
 
-.repo-path {
-    -fx-font-weight: 600;
+.repo-name {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+}
+
+.repo-location {
+    -fx-text-fill: #6b7280;
 }
 
 .branch-label {
     -fx-font-weight: 700;
+}
+
+.recent-repo-item {
+    -fx-padding: 4px 0 4px 0;
+}
+
+.recent-repo-name {
+    -fx-font-weight: 700;
+}
+
+.recent-repo-path {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6b7280;
 }
 
 .command-label {

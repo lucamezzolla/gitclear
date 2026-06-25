@@ -19,6 +19,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -42,9 +43,11 @@ public class MainView {
     private final Stage stage;
     private final GitService gitService;
     private final RecentRepositoriesService recentRepositoriesService;
+    private final PathFormatter pathFormatter = new PathFormatter();
 
     private final BorderPane root = new BorderPane();
-    private final Label repositoryLabel = new Label("No repository selected");
+    private final Label repositoryNameLabel = new Label("No repository selected");
+    private final Label repositoryLocationLabel = new Label("");
     private final Label branchLabel = new Label("—");
     private final Label commandLabel = new Label("No command yet");
     private final Label statusLabel = new Label("Ready");
@@ -113,14 +116,19 @@ public class MainView {
         Label repoCaption = new Label("Current repository");
         repoCaption.getStyleClass().add("section-caption");
 
-        repositoryLabel.getStyleClass().add("repo-path");
+        repositoryNameLabel.getStyleClass().add("repo-name");
+        repositoryLocationLabel.getStyleClass().add("repo-location");
+
+        VBox repositoryBlock = new VBox(4, repoCaption, repositoryNameLabel, repositoryLocationLabel);
+        repositoryBlock.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(repositoryBlock, Priority.ALWAYS);
 
         Label branchCaption = new Label("Branch");
         branchCaption.getStyleClass().add("section-caption");
 
         branchLabel.getStyleClass().add("branch-label");
 
-        HBox repositoryInfo = new HBox(24, buildInfoBlock(repoCaption, repositoryLabel), buildInfoBlock(branchCaption, branchLabel));
+        HBox repositoryInfo = new HBox(24, repositoryBlock, buildInfoBlock(branchCaption, branchLabel));
         repositoryInfo.setAlignment(Pos.CENTER_LEFT);
 
         Label changesCaption = new Label("Changes");
@@ -151,18 +159,12 @@ public class MainView {
         recentHint.getStyleClass().add("hint-label");
 
         recentRepositoriesList.setPlaceholder(new Label("No recent repositories yet."));
-        recentRepositoriesList.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(Path item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.toString());
-            }
-        });
+        recentRepositoriesList.setCellFactory(list -> new RecentRepositoryCell());
         recentRepositoriesList.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 Path selected = recentRepositoriesList.getSelectionModel().getSelectedItem();
                 if (selected != null) {
-                    openRepository(selected);
+                    openRecentRepository(selected);
                 }
             }
         });
@@ -366,6 +368,16 @@ public class MainView {
         }
     }
 
+    private void openRecentRepository(Path repositoryPath) {
+        Path normalizedPath = repositoryPath.toAbsolutePath().normalize();
+        if (!Files.isDirectory(normalizedPath)) {
+            showMissingRecentRepositoryDialog(normalizedPath);
+            return;
+        }
+
+        openRepository(normalizedPath);
+    }
+
     private void openRepository(Path repositoryPath) {
         Path normalizedPath = repositoryPath.toAbsolutePath().normalize();
 
@@ -386,7 +398,9 @@ public class MainView {
 
     private void setCurrentRepository(Path repositoryPath) {
         currentRepository = repositoryPath;
-        repositoryLabel.setText(currentRepository.toString());
+        repositoryNameLabel.setText(pathFormatter.repositoryName(currentRepository));
+        repositoryLocationLabel.setText(pathFormatter.compactPath(currentRepository));
+        repositoryLocationLabel.setTooltip(new Tooltip(currentRepository.toString()));
         updateActionState();
     }
 
@@ -471,6 +485,33 @@ public class MainView {
         return name.isBlank() ? "repository" : name;
     }
 
+    private void showMissingRecentRepositoryDialog(Path repositoryPath) {
+        Platform.runLater(() -> {
+            ButtonType removeButton = new ButtonType("Remove from Recent", ButtonBar.ButtonData.OK_DONE);
+            ButtonType keepButton = new ButtonType("Keep", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("GitClear");
+            alert.setHeaderText("Repository not found");
+            alert.setContentText("""
+                    This recent repository no longer exists:
+
+                    %s
+
+                    Do you want to remove it from Recent?
+                    """.formatted(repositoryPath));
+            alert.getButtonTypes().setAll(removeButton, keepButton);
+
+            alert.showAndWait()
+                    .filter(button -> button == removeButton)
+                    .ifPresent(button -> {
+                        recentRepositoriesService.removeRepository(repositoryPath);
+                        refreshRecentRepositories();
+                        statusLabel.setText("Recent repository removed");
+                    });
+        });
+    }
+
     private <T> void runTask(String message, TaskSupplier<T> supplier, TaskSuccessHandler<T> successHandler) {
         statusLabel.setText(message);
         ProgressIndicator progressIndicator = new ProgressIndicator();
@@ -519,6 +560,35 @@ public class MainView {
             alert.setContentText(message == null || message.isBlank() ? "No details available." : message);
             alert.showAndWait();
         });
+    }
+
+    private class RecentRepositoryCell extends ListCell<Path> {
+
+        @Override
+        protected void updateItem(Path item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setText(null);
+                setGraphic(null);
+                setTooltip(null);
+                return;
+            }
+
+            Label nameLabel = new Label(pathFormatter.repositoryName(item));
+            nameLabel.getStyleClass().add("recent-repo-name");
+
+            Label pathLabel = new Label(pathFormatter.compactParent(item));
+            pathLabel.getStyleClass().add("recent-repo-path");
+            pathLabel.setTooltip(new Tooltip(item.toString()));
+
+            VBox content = new VBox(2, nameLabel, pathLabel);
+            content.getStyleClass().add("recent-repo-item");
+
+            setText(null);
+            setGraphic(content);
+            setTooltip(new Tooltip(item.toString()));
+        }
     }
 
     @FunctionalInterface
