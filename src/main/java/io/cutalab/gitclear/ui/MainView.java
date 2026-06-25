@@ -42,11 +42,17 @@ public class MainView {
     private final Label branchLabel = new Label("—");
     private final Label commandLabel = new Label("No command yet");
     private final Label statusLabel = new Label("Ready");
+    private final Label gitVersionLabel = new Label("Git: checking...");
     private final ListView<String> changesList = new ListView<>();
     private final ListView<Path> recentRepositoriesList = new ListView<>();
     private final TextArea commandOutput = new TextArea();
 
+    private final Button cloneButton = new Button("Clone Repository");
+    private final Button openButton = new Button("Open Local Repository");
+    private final Button refreshButton = new Button("Refresh");
+
     private Path currentRepository;
+    private boolean gitAvailable;
 
     public MainView(Stage stage, GitService gitService, RecentRepositoriesService recentRepositoriesService) {
         this.stage = stage;
@@ -54,6 +60,8 @@ public class MainView {
         this.recentRepositoriesService = recentRepositoriesService;
         buildLayout();
         refreshRecentRepositories();
+        updateActionState();
+        checkGitAvailability();
     }
 
     public Parent getRoot() {
@@ -74,16 +82,12 @@ public class MainView {
         Label subtitle = new Label("A calm Git client for real teams.");
         subtitle.getStyleClass().add("app-subtitle");
 
-        Button cloneButton = new Button("Clone Repository");
         cloneButton.getStyleClass().add("primary-button");
         cloneButton.setOnAction(event -> showCloneDialog());
 
-        Button openButton = new Button("Open Local Repository");
         openButton.setOnAction(event -> openLocalRepository());
 
-        Button refreshButton = new Button("Refresh");
         refreshButton.setOnAction(event -> refreshStatus());
-        refreshButton.disableProperty().bind(repositoryLabel.textProperty().isEqualTo("No repository selected"));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -173,9 +177,41 @@ public class MainView {
 
     private Parent buildFooter() {
         statusLabel.getStyleClass().add("footer-label");
-        HBox footer = new HBox(statusLabel);
+        gitVersionLabel.getStyleClass().add("footer-label");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox footer = new HBox(12, statusLabel, spacer, gitVersionLabel);
         footer.getStyleClass().add("footer");
+        footer.setAlignment(Pos.CENTER_LEFT);
         return footer;
+    }
+
+    private void checkGitAvailability() {
+        runTask("Checking Git...", gitService::version, result -> {
+            updateCommandResult(result);
+
+            gitAvailable = result.success();
+            if (gitAvailable) {
+                gitVersionLabel.setText("Git: " + result.output().trim());
+                statusLabel.setText("Ready");
+            } else {
+                gitVersionLabel.setText("Git: not available");
+                statusLabel.setText("Git is not available");
+                changesList.getItems().setAll("GitClear cannot run Git commands until Git is installed and available in PATH.");
+                showWarning("GitClear could not find Git. Please install Git or make sure it is available in PATH.");
+            }
+
+            updateActionState();
+        });
+    }
+
+    private void updateActionState() {
+        cloneButton.setDisable(!gitAvailable);
+        openButton.setDisable(!gitAvailable);
+        refreshButton.setDisable(!gitAvailable || currentRepository == null);
+        recentRepositoriesList.setDisable(!gitAvailable);
     }
 
     private void showCloneDialog() {
@@ -282,6 +318,7 @@ public class MainView {
             repositoryLabel.setText(currentRepository.toString());
             recentRepositoriesService.addRepository(currentRepository);
             refreshRecentRepositories();
+            updateActionState();
             refreshStatus();
         });
     }
@@ -306,7 +343,7 @@ public class MainView {
     private void applyStatusOutput(String output) {
         changesList.getItems().clear();
 
-        String[] lines = output.split("\\R");
+        String[] lines = output.split("\R");
         boolean branchFound = false;
 
         for (String line : lines) {

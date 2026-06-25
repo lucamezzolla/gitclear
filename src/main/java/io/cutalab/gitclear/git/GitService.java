@@ -14,6 +14,10 @@ public class GitService {
 
     private static final Duration COMMAND_TIMEOUT = Duration.ofSeconds(120);
 
+    public GitCommandResult version() {
+        return run(null, List.of("--version"));
+    }
+
     public GitCommandResult status(Path repositoryPath) {
         return run(repositoryPath, List.of("status", "--short", "--branch"));
     }
@@ -68,11 +72,23 @@ public class GitService {
             return new GitCommandResult(command, process.exitValue(), output);
 
         } catch (IOException e) {
-            return new GitCommandResult(command, 1, "Unable to run Git command: " + e.getMessage());
+            return new GitCommandResult(command, 127, buildGitExecutionError(e));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return new GitCommandResult(command, 130, "Git command interrupted.");
         }
+    }
+
+    private String buildGitExecutionError(IOException e) {
+        return """
+                Unable to run the Git command.
+
+                GitClear uses the Git executable installed on your system.
+                Please make sure Git is installed and available in PATH.
+
+                Technical details:
+                %s
+                """.formatted(e.getMessage()).trim();
     }
 
     private static void copy(InputStream inputStream, ByteArrayOutputStream outputBuffer) {

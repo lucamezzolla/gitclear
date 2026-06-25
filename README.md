@@ -27,6 +27,8 @@ Version: `0.1.0-dev`
 
 This first development version can:
 
+- check whether Git is installed and available in `PATH`
+- show the detected Git version
 - clone a remote repository using the local `git` command
 - open an existing local repository
 - show the current branch/status line

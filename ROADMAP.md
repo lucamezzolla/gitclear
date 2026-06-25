@@ -14,8 +14,8 @@ Status: in progress
 - [x] Show changed files
 - [x] Show last Git command
 - [x] Recent repositories
+- [x] Detect missing Git installation clearly
 - [ ] Improve clone progress feedback
-- [ ] Detect missing Git installation clearly
 - [ ] Better validation for destination folder
 - [ ] Empty state improvements
 
